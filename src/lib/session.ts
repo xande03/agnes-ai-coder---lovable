@@ -18,7 +18,12 @@ export type Session = {
   info: RepoInfo;
 };
 
-export type Attachment = { name: string; mimeType: string; dataBase64: string; preview?: string };
+export type Attachment = {
+  name: string;
+  mimeType: string;
+  dataBase64: string;
+  preview?: string | undefined;
+};
 
 export type ChatMessage = {
   id: string;
