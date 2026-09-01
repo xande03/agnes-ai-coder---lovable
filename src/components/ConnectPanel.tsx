@@ -101,11 +101,10 @@ export function ConnectPanel({ onConnect }: { onConnect: (s: Session) => void })
               <Github className='h-8 w-8' />
             </div>
           </div>
-          <div className='mx-auto mb-3 inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[11px] font-semibold tracking-widest text-primary uppercase'>
-            <Sparkles className='h-3 w-3' />
-            Agnes 2.5 Flash
+          <div className='mx-auto mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary'>
+            <Sparkles className='h-4 w-4' />
           </div>
-          <h1 className='text-3xl font-semibold tracking-tight sm:text-4xl'>Agnes Repo Agent</h1>
+          <h1 className='text-3xl font-semibold tracking-tight sm:text-4xl'>Brasas Agent</h1>
           <p className='mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground'>
             Conecte seu repositório e deixe o agente editar, commitar e enviar as mudanças
             automaticamente — com precisão cirúrgica.

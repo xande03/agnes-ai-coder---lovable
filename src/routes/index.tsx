@@ -29,13 +29,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Agnes Repo Agent — Agente de IA para projetos GitHub" },
+      { title: "Brasas Agent — Agente de IA para projetos GitHub" },
       {
         name: "description",
         content:
-          "Conecte seu repositório GitHub e deixe o agente Agnes 2.5 Flash aplicar correções, ajustes e novos componentes com commit e push automáticos.",
+          "Conecte seu repositório GitHub e deixe o agente Brasas aplicar correções, ajustes e novos componentes com commit e push automáticos.",
       },
-      { property: "og:title", content: "Agnes Repo Agent — Agente de IA para projetos GitHub" },
+      { property: "og:title", content: "Brasas Agent — Agente de IA para projetos GitHub" },
       {
         property: "og:description",
         content:
@@ -155,7 +155,6 @@ function Index() {
             <p className="flex items-center gap-2 text-xs text-muted-foreground">
               <GitBranch className="h-3 w-3" />
               <span className="font-mono">{session.branch}</span>
-              <span className="hidden sm:inline">· agnes-2.5-flash</span>
             </p>
           </div>
         </div>

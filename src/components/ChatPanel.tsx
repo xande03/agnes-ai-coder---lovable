@@ -176,7 +176,7 @@ export function ChatPanel({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="mb-1 text-xs font-medium text-muted-foreground">
-                  {m.role === "user" ? "Você" : "Agnes 2.5 Flash"}
+                  {m.role === "user" ? "Você" : "Brasas Agent"}
                 </p>
                 {m.role === "user" ? (
                   <div className="inline-block max-w-full rounded-xl bg-primary px-3.5 py-2 text-sm break-words text-primary-foreground">
