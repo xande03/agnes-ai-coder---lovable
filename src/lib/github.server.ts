@@ -130,6 +130,7 @@ export async function downloadZip(ref: RepoRef, branch: string) {
         Authorization: `Bearer ${ref.token}`,
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "Agnes-Agent/1.0",
       },
     },
   );
