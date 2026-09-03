@@ -10,6 +10,7 @@ async function gh(ref: RepoRef, path: string, init?: RequestInit) {
       Authorization: `Bearer ${ref.token}`,
       "X-GitHub-Api-Version": "2022-11-28",
       "Content-Type": "application/json",
+      "User-Agent": "Agnes-Agent/1.0",
       ...(init?.headers ?? {}),
     },
   });
