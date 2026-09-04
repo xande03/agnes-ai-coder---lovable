@@ -79,9 +79,10 @@ export const Route = createFileRoute("/api/agent")({
           return Response.json({ error: "JSON inválido" }, { status: 400 });
         }
 
-        const { token, nvidiaKey, owner, repo } = body;
+        const { token, owner, repo } = body;
+        const nvidiaKey = body.nvidiaKey || process.env["NVIDIA_API_KEY"];
         if (!token || !nvidiaKey || !owner || !repo) {
-          return Response.json({ error: "Credenciais ausentes (token, nvidiaKey, owner, repo)" }, { status: 400 });
+          return Response.json({ error: "Credenciais ausentes. Reconecte o projeto informando a NVIDIA API Key." }, { status: 400 });
         }
         const branch = body.branch || "main";
         const ref: RepoRef = { token, owner, repo, branch };
