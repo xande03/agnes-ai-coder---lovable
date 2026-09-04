@@ -83,6 +83,11 @@ const RUNTIME = String.raw`
   .preview-error { 
     padding: 16px; margin: 16px; border-radius: 8px; 
     background: #fee2e2; color: #991b1b; font-family: system-ui, sans-serif; font-size: 14px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .preview-warning { 
+    padding: 16px; margin: 16px; border-radius: 8px; 
+    background: #fef3c7; color: #92400e; font-family: system-ui, sans-serif; font-size: 14px;
   }
 </style>
 <div class="preview-loading" id="__loader">Carregando...</div>
@@ -96,6 +101,12 @@ const RUNTIME = String.raw`
     document.body.appendChild(div);
     parent.postMessage({ __preview: "error", msg: String(msg) }, "*");
   };
+  window.__previewWarning = (msg) => {
+    const div = document.createElement('div');
+    div.className = 'preview-warning';
+    div.textContent = 'Aviso: ' + String(msg);
+    document.body.appendChild(div);
+  };
   window.addEventListener("error", (e) => { if (e.message) window.__previewError(e.message); });
   window.addEventListener("unhandledrejection", (e) => window.__previewError(e.reason));
 </script>
@@ -106,6 +117,7 @@ const RUNTIME = String.raw`
   const ENTRY = window.__ENTRY__;
   const urls = {};
   const compiling = {};
+  const loadedModules = {};
 
   if (!ENTRY || !FILES || !FILES[ENTRY]) {
     window.__previewError('Arquivo de entrada não encontrado: ' + (ENTRY || '(nenhum)'));
@@ -116,6 +128,11 @@ const RUNTIME = String.raw`
 
   function bare(spec) {
     if (spec.startsWith("http")) return spec;
+    const pkg = spec.split("/")[0];
+    const blocked = ["react", "react-dom", "react/jsx-runtime"];
+    if (blocked.includes(pkg)) return "data:text/javascript,export default {};export const useState=()=>[];export const useEffect=()=>{};export const useRef=()=>({current:null});export const useCallback=(fn)=>fn;export const useMemo=(fn)=>fn();export const createContext=(v)=>({Provider:{},Consumer:{},_currentValue:v});export const useContext=()=>null;export const Fragment='div';";
+    const noBundle = ["lucide-react", "react-markdown", "remark-gfm", "recharts"];
+    if (noBundle.includes(pkg)) return "https://esm.sh/" + spec;
     return "https://esm.sh/" + spec + "?dev";
   }
 
@@ -167,6 +184,9 @@ const RUNTIME = String.raw`
     const s = document.createElement("script");
     s.type = "module";
     s.src = entryUrl;
+    s.onerror = function(e) {
+      window.__previewError("Falha ao carregar módulo de entrada. Verifique se todas as dependências estão instaladas.");
+    };
     document.body.appendChild(s);
   } catch (e) {
     window.__previewError("Falha ao inicializar: " + e.message);
