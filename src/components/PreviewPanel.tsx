@@ -74,9 +74,29 @@ function collectSpecifiers(src: string) {
 }
 
 const RUNTIME = String.raw`
+<style>
+  body { margin: 0; }
+  .preview-loading { 
+    display: flex; align-items: center; justify-content: center; 
+    height: 100vh; font-family: system-ui, sans-serif; color: #666; 
+  }
+  .preview-error { 
+    padding: 16px; margin: 16px; border-radius: 8px; 
+    background: #fee2e2; color: #991b1b; font-family: system-ui, sans-serif; font-size: 14px;
+  }
+</style>
+<div class="preview-loading" id="__loader">Carregando...</div>
 <script>
-  window.__previewError = (msg) => parent.postMessage({ __preview: "error", msg: String(msg) }, "*");
-  window.addEventListener("error", (e) => window.__previewError(e.message));
+  window.__previewError = (msg) => {
+    const loader = document.getElementById('__loader');
+    if (loader) loader.remove();
+    const div = document.createElement('div');
+    div.className = 'preview-error';
+    div.textContent = 'Erro: ' + String(msg);
+    document.body.appendChild(div);
+    parent.postMessage({ __preview: "error", msg: String(msg) }, "*");
+  };
+  window.addEventListener("error", (e) => { if (e.message) window.__previewError(e.message); });
   window.addEventListener("unhandledrejection", (e) => window.__previewError(e.reason));
 </script>
 <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
@@ -86,6 +106,11 @@ const RUNTIME = String.raw`
   const ENTRY = window.__ENTRY__;
   const urls = {};
   const compiling = {};
+
+  if (!ENTRY || !FILES || !FILES[ENTRY]) {
+    window.__previewError('Arquivo de entrada não encontrado: ' + (ENTRY || '(nenhum)'));
+    return;
+  }
 
   function isCss(p) { return /\.css$/i.test(p); }
 
@@ -135,11 +160,17 @@ const RUNTIME = String.raw`
     return urls[path];
   }
 
-  const entryUrl = compile(ENTRY);
-  const s = document.createElement("script");
-  s.type = "module";
-  s.src = entryUrl;
-  document.body.appendChild(s);
+  try {
+    const entryUrl = compile(ENTRY);
+    const loader = document.getElementById('__loader');
+    if (loader) loader.remove();
+    const s = document.createElement("script");
+    s.type = "module";
+    s.src = entryUrl;
+    document.body.appendChild(s);
+  } catch (e) {
+    window.__previewError("Falha ao inicializar: " + e.message);
+  }
 })();
 </script>
 `;
@@ -215,23 +246,38 @@ export function PreviewPanel({
       const resolveMap: Record<string, string> = {};
       const queue = [realEntry];
       const seen = new Set<string>();
+      let fetchErrors = 0;
 
       while (queue.length && Object.keys(files).length < 120) {
         const path = queue.shift() as string;
         if (seen.has(path)) continue;
         seen.add(path);
-        const src = await fetchText(session, path);
-        if (src === null) continue;
-        files[path] = src;
+        try {
+          const src = await fetchText(session, path);
+          if (src === null) {
+            fetchErrors++;
+            continue;
+          }
+          files[path] = src;
+        } catch {
+          fetchErrors++;
+          continue;
+        }
         if (CSS_EXT.test(path)) continue;
         if (!CODE_EXT.test(path)) continue;
-        for (const spec of collectSpecifiers(src)) {
+        for (const spec of collectSpecifiers(files[path])) {
           const target = resolvePath(spec, path, filePaths);
           if (target) {
             resolveMap[`${path}|${spec}`] = target;
             if (!seen.has(target)) queue.push(target);
           }
         }
+      }
+
+      if (Object.keys(files).length === 0) {
+        setError("Nenhum arquivo pôde ser carregado do repositório. Verifique as credenciais e a estrutura do projeto.");
+        setLoading(false);
+        return;
       }
 
       const payload = JSON.stringify({ ...files, __resolve__: resolveMap });
@@ -320,15 +366,23 @@ export function PreviewPanel({
       <div className="scroll-slim min-h-0 flex-1 overflow-auto bg-surface-2/40 p-3">
         <div className="mx-auto h-full" style={{ width: DEVICE_WIDTH[device], maxWidth: "100%" }}>
           {loading && !html ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            <div className="flex h-full min-h-[420px] items-center justify-center text-sm text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Montando preview...
+            </div>
+          ) : !html ? (
+            <div className="flex h-full min-h-[420px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-surface/50 text-sm text-muted-foreground">
+              <Monitor className="h-8 w-8 opacity-40" />
+              <p>Selecione um arquivo de entrada para iniciar o preview</p>
+              <Button size="sm" variant="outline" onClick={() => void build()}>
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Gerar preview
+              </Button>
             </div>
           ) : (
             <iframe
               ref={frameRef}
               title="Preview do projeto"
               srcDoc={html}
-              sandbox="allow-scripts allow-forms allow-popups"
+              sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
               className="h-full min-h-[420px] w-full rounded-xl border border-border bg-white shadow-sm"
             />
           )}
