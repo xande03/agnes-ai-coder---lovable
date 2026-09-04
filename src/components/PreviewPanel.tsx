@@ -107,7 +107,19 @@ const RUNTIME = String.raw`
     div.textContent = 'Aviso: ' + String(msg);
     document.body.appendChild(div);
   };
-  window.addEventListener("error", (e) => { if (e.message) window.__previewError(e.message); });
+  window.addEventListener("error", (e) => {
+    if (!e.message) return;
+    var msg = e.message;
+    if (msg.indexOf("does not provide an export named") !== -1) {
+      var m = msg.match(/export named '([^']+)'/);
+      var name = m ? m[1] : "?";
+      var src = e.filename || "";
+      window.__previewWarning("Ícone/componente '" + name + "' não encontrado na dependência. Verifique se o nome está correto no código-fonte. O preview continua funcional para os demais componentes.");
+      e.preventDefault();
+      return;
+    }
+    window.__previewError(msg);
+  });
   window.addEventListener("unhandledrejection", (e) => window.__previewError(e.reason));
 </script>
 <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
