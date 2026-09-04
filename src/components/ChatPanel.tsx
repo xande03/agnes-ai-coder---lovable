@@ -16,7 +16,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
-import { fileToAttachment, type Attachment, type ChatMessage, type Session } from "@/lib/session";
+import { fileToAttachment, loadChat, saveChat, clearChat, type Attachment, type ChatMessage, type Session } from "@/lib/session";
 
 const SUGGESTIONS = [
   "Analise a estrutura do projeto e corrija erros óbvios",
@@ -31,7 +31,7 @@ export function ChatPanel({
   session: Session;
   onChanged: () => void;
 }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadChat());
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [busy, setBusy] = useState(false);
@@ -43,6 +43,10 @@ export function ChatPanel({
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
+
+  useEffect(() => {
+    saveChat(messages);
+  }, [messages]);
 
   async function addFiles(list: FileList | File[]) {
     const arr = Array.from(list).slice(0, 8);
@@ -321,7 +325,10 @@ export function ChatPanel({
               variant="ghost"
               size="icon"
               className="shrink-0"
-              onClick={() => setMessages([])}
+              onClick={() => {
+                setMessages([]);
+                clearChat();
+              }}
               title="Limpar conversa"
             >
               <Trash2 className="h-4 w-4" />

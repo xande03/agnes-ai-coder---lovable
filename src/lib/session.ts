@@ -35,6 +35,7 @@ export type ChatMessage = {
 };
 
 const KEY = "agnes-session";
+const CHAT_KEY = "agnes-chat";
 
 export function loadSession(): Session | null {
   try {
@@ -51,6 +52,24 @@ export function saveSession(s: Session) {
 
 export function clearSession() {
   localStorage.removeItem(KEY);
+  localStorage.removeItem(CHAT_KEY);
+}
+
+export function loadChat(): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(CHAT_KEY);
+    return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveChat(messages: ChatMessage[]) {
+  localStorage.setItem(CHAT_KEY, JSON.stringify(messages));
+}
+
+export function clearChat() {
+  localStorage.removeItem(CHAT_KEY);
 }
 
 export async function fileToAttachment(file: File): Promise<Attachment> {
