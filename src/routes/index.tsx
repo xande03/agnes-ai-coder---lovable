@@ -8,7 +8,6 @@ import {
   LogOut,
   Lock,
   MessagesSquare,
-  Monitor,
   Moon,
   Sun,
 } from "lucide-react";
@@ -17,7 +16,6 @@ import { useCallback, useEffect, useState } from "react";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ConnectPanel } from "@/components/ConnectPanel";
 import { FileExplorer } from "@/components/FileExplorer";
-import { PreviewPanel } from "@/components/PreviewPanel";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme";
 import {
@@ -56,10 +54,8 @@ function Index() {
   const [ready, setReady] = useState(false);
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [treeLoading, setTreeLoading] = useState(false);
-  const [tab, setTab] = useState<"chat" | "files" | "preview">("chat");
+  const [tab, setTab] = useState<"chat" | "files">("chat");
   const [downloading, setDownloading] = useState(false);
-  const [previewKey, setPreviewKey] = useState(0);
-  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     setSession(loadSession());
@@ -89,14 +85,9 @@ function Index() {
 
   useEffect(() => {
     if (session) {
-      void refreshTree(session).then(() => {
-        if (initialLoad) {
-          setTab("preview");
-          setInitialLoad(false);
-        }
-      });
+      void refreshTree(session);
     }
-  }, [session, refreshTree, initialLoad]);
+  }, [session, refreshTree]);
 
   async function download() {
     if (!session) return;
@@ -178,9 +169,6 @@ function Index() {
             <TabButton active={tab === "files"} onClick={() => setTab("files")} icon={<Code2 className="h-4 w-4" />}>
               Arquivos
             </TabButton>
-            <TabButton active={tab === "preview"} onClick={() => setTab("preview")} icon={<Monitor className="h-4 w-4" />}>
-              Preview
-            </TabButton>
           </div>
           <Button variant="outline" size="sm" onClick={() => void download()} disabled={downloading}>
             {downloading ? (
@@ -215,9 +203,6 @@ function Index() {
           <TabButton active={tab === "files"} onClick={() => setTab("files")} icon={<Code2 className="h-4 w-4" />} full>
             Arquivos
           </TabButton>
-          <TabButton active={tab === "preview"} onClick={() => setTab("preview")} icon={<Monitor className="h-4 w-4" />} full>
-            Preview
-          </TabButton>
         </div>
       </div>
 
@@ -227,11 +212,8 @@ function Index() {
             session={session}
             onChanged={() => {
               void refreshTree(session);
-              setPreviewKey((k) => k + 1);
             }}
           />
-        ) : tab === "preview" ? (
-          <PreviewPanel session={session} tree={tree} refreshKey={previewKey} />
         ) : (
           <FileExplorer
             session={session}
