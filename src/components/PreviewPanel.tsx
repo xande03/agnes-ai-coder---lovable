@@ -129,10 +129,8 @@ const RUNTIME = String.raw`
   function bare(spec) {
     if (spec.startsWith("http")) return spec;
     const pkg = spec.split("/")[0];
-    const blocked = ["react", "react-dom", "react/jsx-runtime"];
-    if (blocked.includes(pkg)) return "data:text/javascript,export default {};export const useState=()=>[];export const useEffect=()=>{};export const useRef=()=>({current:null});export const useCallback=(fn)=>fn;export const useMemo=(fn)=>fn();export const createContext=(v)=>({Provider:{},Consumer:{},_currentValue:v});export const useContext=()=>null;export const Fragment='div';";
-    const noBundle = ["lucide-react", "react-markdown", "remark-gfm", "recharts"];
-    if (noBundle.includes(pkg)) return "https://esm.sh/" + spec;
+    const noDev = ["react", "react-dom", "react/jsx-runtime", "lucide-react", "react-markdown", "remark-gfm", "recharts"];
+    if (noDev.includes(pkg)) return "https://esm.sh/" + spec;
     return "https://esm.sh/" + spec + "?dev";
   }
 
