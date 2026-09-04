@@ -17,7 +17,6 @@ type Attachment = { name: string; mimeType: string; dataBase64: string };
 
 type Body = {
   token?: string;
-  nvidiaKey?: string;
   owner?: string;
   repo?: string;
   branch?: string;
@@ -81,9 +80,8 @@ export const Route = createFileRoute("/api/agent")({
         }
 
         const { token, owner, repo } = body;
-        const nvidiaKey = body.nvidiaKey || process.env["NVIDIA_API_KEY"];
-        if (!token || !nvidiaKey || !owner || !repo) {
-          return Response.json({ error: "Credenciais ausentes. Reconecte o projeto informando a NVIDIA API Key." }, { status: 400 });
+        if (!token || !owner || !repo) {
+          return Response.json({ error: "Credenciais ausentes." }, { status: 400 });
         }
         const branch = body.branch || "main";
         const ref: RepoRef = { token, owner, repo, branch };
@@ -305,7 +303,7 @@ Estes dados são reais e atuais — parta deles em vez de supor a estrutura.`;
 
         try {
           const result = await generateText({
-            model: createAgent(nvidiaKey),
+            model: createAgent(),
             system: `${SYSTEM}\n\n${context}`,
             messages,
             tools,

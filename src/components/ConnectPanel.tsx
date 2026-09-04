@@ -15,7 +15,6 @@ import type { RepoInfo, Session } from '@/lib/session';
 
 export function ConnectPanel({ onConnect }: { onConnect: (s: Session) => void }) {
   const [token, setToken] = useState('');
-  const [nvidiaKey, setNvidiaKey] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
   const [branch, setBranch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,8 +47,8 @@ export function ConnectPanel({ onConnect }: { onConnect: (s: Session) => void })
     e.preventDefault();
     setError(null);
     const { owner, repo } = parseRepo(repoUrl);
-    if (!token.trim() || !nvidiaKey.trim() || !owner || !repo) {
-      setError('Informe o token do GitHub, a chave NVIDIA e o repositório no formato owner/repo.');
+    if (!token.trim() || !owner || !repo) {
+      setError('Informe o token e o repositório no formato owner/repo.');
       return;
     }
     setLoading(true);
@@ -73,7 +72,6 @@ export function ConnectPanel({ onConnect }: { onConnect: (s: Session) => void })
       if (!res.ok || !data.info) throw new Error(data.error ?? 'Falha ao conectar');
       onConnect({
         token: token.trim(),
-        nvidiaKey: nvidiaKey.trim(),
         owner,
         repo,
         branch: data.branch ?? data.info.defaultBranch,
@@ -134,28 +132,6 @@ export function ConnectPanel({ onConnect }: { onConnect: (s: Session) => void })
             </div>
             <p className='text-xs text-muted-foreground'>
               Token clássico ou fine-grained com permissão de leitura e escrita em Contents.
-            </p>
-          </div>
-
-          <div className='mt-5 space-y-2'>
-            <Label htmlFor='nvidia' className='flex items-center gap-2 text-xs tracking-wide uppercase'>
-              <KeyRound className='h-3.5 w-3.5 text-primary' />
-              NVIDIA API Key
-            </Label>
-            <div className='relative'>
-              <KeyRound className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-              <Input
-                id='nvidia'
-                type='password'
-                autoComplete='off'
-                placeholder='nvapi-...'
-                value={nvidiaKey}
-                onChange={(e) => setNvidiaKey(e.target.value)}
-                className='h-11 pl-10'
-              />
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              Chave da API NVIDIA para DeepSeek V4 Flash. Obtenha em build.nvidia.com.
             </p>
           </div>
 

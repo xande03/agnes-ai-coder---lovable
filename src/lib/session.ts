@@ -12,7 +12,6 @@ export type TreeNode = { path: string; type: string; size: number; sha: string }
 
 export type Session = {
   token: string;
-  nvidiaKey: string;
   owner: string;
   repo: string;
   branch: string;
