@@ -75,6 +75,7 @@ export function ChatPanel({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           token: session.token,
+          nvidiaKey: session.nvidiaKey,
           owner: session.owner,
           repo: session.repo,
           branch: session.branch,

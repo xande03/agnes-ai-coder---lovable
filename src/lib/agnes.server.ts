@@ -1,10 +1,10 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-export const AGNES_MODEL = "agnes-2.5-flash";
+export const AGENT_MODEL = "deepseek-ai/deepseek-v4-flash-0731";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Fetch com backoff para 429/5xx da API da Agnes (limite de requisições por minuto). */
+/** Fetch com backoff para 429/5xx da API. */
 const resilientFetch: typeof fetch = async (input, init) => {
   let lastResponse: Response | undefined;
   for (let attempt = 0; attempt < 6; attempt++) {
@@ -18,19 +18,19 @@ const resilientFetch: typeof fetch = async (input, init) => {
     await res.body?.cancel();
     await sleep(waitMs);
   }
-  return lastResponse ?? new Response("Agnes indisponível", { status: 503 });
+  return lastResponse ?? new Response("Modelo indisponível", { status: 503 });
 };
 
-export function createAgnes() {
-  const apiKey = process.env["OPENAI_API_KEY"];
-  if (!apiKey) throw new Error("Missing OPENAI_API_KEY");
+export function createAgent(apiKey?: string) {
+  const key = apiKey || process.env["NVIDIA_API_KEY"];
+  if (!key) throw new Error("Missing NVIDIA_API_KEY");
 
   const provider = createOpenAICompatible({
-    name: "agnes",
-    baseURL: "https://apihub.agnes-ai.com/v1",
-    apiKey,
+    name: "nvidia",
+    baseURL: "https://integrate.api.nvidia.com/v1",
+    apiKey: key,
     fetch: resilientFetch,
   });
 
-  return provider(AGNES_MODEL);
+  return provider(AGENT_MODEL);
 }

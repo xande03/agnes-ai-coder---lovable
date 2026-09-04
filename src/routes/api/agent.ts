@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { generateText, stepCountIs, tool, type ModelMessage } from "ai";
 import { z } from "zod";
 
-import { createAgnes } from "@/lib/agnes.server";
+import { createAgent } from "@/lib/agnes.server";
 import {
   base64ToText,
   deleteFile,
@@ -17,6 +17,7 @@ type Attachment = { name: string; mimeType: string; dataBase64: string };
 
 type Body = {
   token?: string;
+  nvidiaKey?: string;
   owner?: string;
   repo?: string;
   branch?: string;
@@ -78,9 +79,9 @@ export const Route = createFileRoute("/api/agent")({
           return Response.json({ error: "JSON inválido" }, { status: 400 });
         }
 
-        const { token, owner, repo } = body;
-        if (!token || !owner || !repo) {
-          return Response.json({ error: "Credenciais do repositório ausentes" }, { status: 400 });
+        const { token, nvidiaKey, owner, repo } = body;
+        if (!token || !nvidiaKey || !owner || !repo) {
+          return Response.json({ error: "Credenciais ausentes (token, nvidiaKey, owner, repo)" }, { status: 400 });
         }
         const branch = body.branch || "main";
         const ref: RepoRef = { token, owner, repo, branch };
@@ -302,7 +303,7 @@ Estes dados são reais e atuais — parta deles em vez de supor a estrutura.`;
 
         try {
           const result = await generateText({
-            model: createAgnes(),
+            model: createAgent(nvidiaKey),
             system: `${SYSTEM}\n\n${context}`,
             messages,
             tools,
