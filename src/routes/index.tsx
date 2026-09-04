@@ -59,6 +59,7 @@ function Index() {
   const [tab, setTab] = useState<"chat" | "files" | "preview">("chat");
   const [downloading, setDownloading] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     setSession(loadSession());
@@ -87,8 +88,15 @@ function Index() {
   }, []);
 
   useEffect(() => {
-    if (session) void refreshTree(session);
-  }, [session, refreshTree]);
+    if (session) {
+      void refreshTree(session).then(() => {
+        if (initialLoad) {
+          setTab("preview");
+          setInitialLoad(false);
+        }
+      });
+    }
+  }, [session, refreshTree, initialLoad]);
 
   async function download() {
     if (!session) return;
