@@ -72,6 +72,7 @@ export const Route = createFileRoute("/api/agent")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        try {
         let body: Body;
         try {
           body = (await request.json()) as Body;
@@ -317,9 +318,12 @@ Estes dados são reais e atuais — parta deles em vez de supor a estrutura.`;
           const raw = (e as Error).message ?? "Falha desconhecida";
           const rateLimited = /too many requests|429/i.test(raw);
           const msg = rateLimited
-            ? "Limite de requisições da Agnes atingido. Aguarde alguns segundos e envie novamente."
+            ? "Limite de requisições atingido. Aguarde alguns segundos e envie novamente."
             : raw;
           return Response.json({ error: msg, changes }, { status: rateLimited ? 429 : 500 });
+        }
+        } catch (e) {
+          return Response.json({ error: "Erro interno: " + (e as Error).message }, { status: 500 });
         }
       },
     },
