@@ -173,13 +173,18 @@ export const Route = createFileRoute("/api/agent")({
             system: `${SYSTEM}\n\nRepositório conectado: ${owner}/${repo} (branch ${branch}).`,
             messages,
             tools,
+            maxRetries: 0,
             stopWhen: stepCountIs(40),
           });
 
           return Response.json({ text: result.text, changes });
         } catch (e) {
-          const msg = (e as Error).message ?? "Falha desconhecida";
-          return Response.json({ error: msg, changes }, { status: 500 });
+          const raw = (e as Error).message ?? "Falha desconhecida";
+          const rateLimited = /too many requests|429/i.test(raw);
+          const msg = rateLimited
+            ? "Limite de requisições da Agnes atingido. Aguarde alguns segundos e envie novamente."
+            : raw;
+          return Response.json({ error: msg, changes }, { status: rateLimited ? 429 : 500 });
         }
       },
     },
