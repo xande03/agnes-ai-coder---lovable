@@ -1,6 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
-export const AGENT_MODEL = "deepseek-ai/deepseek-v4-flash-0731";
+export const AGENT_MODEL = "deepseek-ai/deepseek-coder-6.7b-instruct";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
