@@ -1,7 +1,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 export const AGENT_MODEL = "agnes-2.5-flash";
-export const AGNES_API_KEY = "sk-wBXWbKNp9S0IyIw4k0LZdxpxsOrvtZh2Je2OmNK26knFsY2F";
+export const AGNES_API_KEY = "sk-ObwE0vDZFYSJC3eD0lP59D2PcpK0PqCy3Yhh3nAObPtOlBlg";
 export const AGNES_BASE_URL = "https://apihub.agnes-ai.com/v1";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
