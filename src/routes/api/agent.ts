@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { generateText, stepCountIs, tool, type ModelMessage } from "ai";
+import { streamText, stepCountIs, tool, type ModelMessage } from "ai";
 import { z } from "zod";
 
 import { createAgent } from "@/lib/agnes.server";
@@ -12,6 +12,9 @@ import {
   textToBase64,
   type RepoRef,
 } from "@/lib/github.server";
+
+const AGENT_TIMEOUT_MS = 90000;
+const MAX_STEPS = 15;
 
 type Attachment = { name: string; mimeType: string; dataBase64: string };
 
@@ -303,16 +306,35 @@ Arquivos-chave: ${map.key || "(nenhum detectado)"}
 Estes dados são reais e atuais — parta deles em vez de supor a estrutura.`;
 
         try {
-          const result = await generateText({
+          const { textStream } = streamText({
             model: createAgent(),
             system: `${SYSTEM}\n\n${context}`,
             messages,
             tools,
             maxRetries: 0,
-            stopWhen: stepCountIs(40),
+            stopWhen: stepCountIs(MAX_STEPS),
           });
 
-          return Response.json({ text: result.text, changes });
+          const encoder = new TextEncoder();
+          const stream = new ReadableStream({
+            async start(controller) {
+              try {
+                for await (const chunk of textStream) {
+                  controller.enqueue(encoder.encode(chunk));
+                }
+                controller.close();
+              } catch (e) {
+                controller.error(e);
+              }
+            },
+          });
+
+          return new Response(stream, {
+            headers: {
+              "content-type": "text/plain; charset=utf-8",
+              "x-agent-changes": JSON.stringify(changes),
+            },
+          });
         } catch (e) {
           const raw = (e as Error).message ?? "Falha desconhecida";
           const rateLimited = /too many requests|429/i.test(raw);
@@ -321,10 +343,10 @@ Estes dados são reais e atuais — parta deles em vez de supor a estrutura.`;
             : raw;
           return Response.json({ error: msg, changes }, { status: rateLimited ? 429 : 500 });
         }
-        } catch (e) {
-          return Response.json({ error: "Erro interno: " + (e as Error).message }, { status: 500 });
-        }
-      },
+      } catch (e) {
+        return Response.json({ error: "Erro interno: " + (e as Error).message }, { status: 500 });
+      }
+    },
     },
   },
 });

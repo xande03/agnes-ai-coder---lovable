@@ -2,6 +2,7 @@ import {
   ArrowUp,
   Bot,
   CheckCircle2,
+  CircleCheck,
   FileUp,
   Loader2,
   Paperclip,
@@ -69,6 +70,8 @@ export function ChatPanel({
     const sent = attachments;
     setAttachments([]);
     setBusy(true);
+    let assistantMsgId = crypto.randomUUID();
+    let fullContent = "";
     try {
       const res = await fetch("/api/agent", {
         method: "POST",
@@ -86,29 +89,61 @@ export function ChatPanel({
           })),
         }),
       });
-      const data = (await res.json()) as {
-        text?: string;
-        changes?: ChatMessage["changes"];
-        error?: string;
-      };
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: data.error ? `Erro: ${data.error}` : (data.text ?? "Concluído."),
-          changes: data.changes ?? [],
-          error: Boolean(data.error),
-        },
-      ]);
-      if ((data.changes ?? []).length > 0) onChanged();
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: "Erro desconhecido" }));
+        throw new Error(errData.error ?? `HTTP ${res.status}`);
+      }
+
+      const changesHeader = res.headers.get("x-agent-changes");
+      const changes = changesHeader ? JSON.parse(changesHeader) : [];
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      if (reader) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: assistantMsgId,
+            role: "assistant",
+            content: "",
+            changes: [],
+            error: false,
+          },
+        ]);
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            fullContent += chunk;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMsgId ? { ...m, content: fullContent } : m
+              )
+            );
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      }
+
+      const isSuccess = res.ok;
+      const finalContent = fullContent + (isSuccess ? "\n\n✅ **Tarefa concluída com sucesso**" : "");
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsgId ? { ...m, content: finalContent, changes } : m
+        )
+      );
+      if (changes.length > 0) onChanged();
     } catch (e) {
+      const errorMsg = `Erro: ${(e as Error).message}`;
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: `Erro de rede: ${(e as Error).message}`,
+          content: errorMsg,
           error: true,
         },
       ]);
@@ -233,6 +268,13 @@ export function ChatPanel({
                     ))}
                   </div>
                 ) : null}
+
+                {!m.error && !m.changes && m.content.includes("✅ **Tarefa concluída com sucesso**") ? (
+                  <div className="mt-3 flex items-center gap-2 rounded-xl border border-success/30 bg-success/8 p-3">
+                    <CircleCheck className="h-4 w-4 text-success shrink-0" />
+                    <span className="text-xs font-medium text-success">Tarefa concluída com sucesso</span>
+                  </div>
+                ) : null}
               </div>
             </div>
           ))
@@ -243,7 +285,8 @@ export function ChatPanel({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/25">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
-            Analisando o repositório e aplicando as mudanças...
+            <span>Processando resposta do agente...</span>
+            <span className="text-xs text-muted-foreground/60">(timeout: 90s)</span>
           </div>
         ) : null}
         <div ref={endRef} />
