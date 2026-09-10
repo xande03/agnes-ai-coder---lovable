@@ -42,6 +42,7 @@ REGRAS:
 - Preserve estilo, indentação, imports, tipagem e o restante do arquivo intacto.
 - Respeite a stack real do projeto (framework, router, sistema de estilos). Nada de introduzir libs que o projeto não usa.
 - Cada write_file/edit_file/delete_file já faz commit + push automáticos.
+- **IMAGENS/ANEXOS: SEMPRE salve imagens recebidas no repositório usando commit_attachment (caminho sugerido: public/assets/ ou src/assets/). Depois referencie o caminho no código (ex: <img src="/assets/imagem.png" />).**
 - Anexos do usuário vão para o repositório com commit_attachment em um caminho coerente (public/, src/assets/) e depois são referenciados no código.
 - Mantenha o contexto da conversa: o usuário pode se referir a mudanças anteriores ("aquele botão", "a mesma seção"). Use o histórico e o registro de arquivos já alterados nesta sessão.
 - Responda em português, curto e objetivo: o que mudou, em quais arquivos e em qual trecho.`;
