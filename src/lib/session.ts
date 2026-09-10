@@ -64,8 +64,33 @@ export function loadChat(): ChatMessage[] {
   }
 }
 
+const MAX_CHAT_MESSAGES = 30;
+const MAX_ATTACHMENT_PREVIEW_SIZE = 50000; // ~50KB max for preview
+
+function sanitizeMessageForStorage(msg: ChatMessage): ChatMessage {
+  if (!msg.attachments?.length) return msg;
+  return {
+    ...msg,
+    attachments: msg.attachments.map((a) => ({
+      ...a,
+      dataBase64: "", // não salva base64 no localStorage
+      preview: a.preview?.slice(0, MAX_ATTACHMENT_PREVIEW_SIZE),
+    })),
+  };
+}
+
 export function saveChat(messages: ChatMessage[]) {
-  localStorage.setItem(CHAT_KEY, JSON.stringify(messages));
+  const trimmed = messages.slice(-MAX_CHAT_MESSAGES);
+  const sanitized = trimmed.map(sanitizeMessageForStorage);
+  try {
+    localStorage.setItem(CHAT_KEY, JSON.stringify(sanitized));
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      // fallback: salva só as últimas 10 sem anexos
+      const minimal = messages.slice(-10).map((m) => ({ ...m, attachments: [] }));
+      localStorage.setItem(CHAT_KEY, JSON.stringify(minimal));
+    }
+  }
 }
 
 export function clearChat() {
