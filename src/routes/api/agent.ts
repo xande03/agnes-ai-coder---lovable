@@ -16,6 +16,15 @@ import {
 const AGENT_TIMEOUT_MS = 90000;
 const MAX_STEPS = 15;
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} excedeu o tempo limite de ${ms / 1000}s`)), ms),
+    ),
+  ]);
+}
+
 type Attachment = { name: string; mimeType: string; dataBase64: string };
 
 type Body = {
@@ -306,7 +315,7 @@ Arquivos-chave: ${map.key || "(nenhum detectado)"}
 Estes dados são reais e atuais — parta deles em vez de supor a estrutura.`;
 
         try {
-          const { textStream } = streamText({
+          const result = streamText({
             model: createAgent(),
             system: `${SYSTEM}\n\n${context}`,
             messages,
@@ -314,6 +323,12 @@ Estes dados são reais e atuais — parta deles em vez de supor a estrutura.`;
             maxRetries: 0,
             stopWhen: stepCountIs(MAX_STEPS),
           });
+
+          const textStream = await withTimeout(
+            (async () => result.textStream)(),
+            AGENT_TIMEOUT_MS,
+            "Agente",
+          );
 
           const encoder = new TextEncoder();
           const stream = new ReadableStream({
